@@ -5,6 +5,7 @@ from google.adk.models.lite_llm import LiteLlm
 from dotenv import load_dotenv
 from .prompts import ROOT_AGENT_INSTRUCTION, ROOT_AGENT_DESCRIPTION, CREDIT_CARD_AGENT_INSTRUCTION, CREDIT_CARD_AGENT_DESCRIPTION
 from .tools  import get_basic_account_information, get_user_transactions, get_credit_card_details, get_credit_card_late_fee_waive_off, handover_to_chatbot
+from google.adk.tools import agent_tool
 
 load_dotenv()
 
@@ -13,7 +14,7 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
 dispute_agent = LlmAgent(
     name="DisputeAgent",
-    model=LiteLlm(model="openai/gpt-5"),
+    model=LiteLlm(model="openai/gpt-4.1"),
     tools=[],
     instruction="You are a Dispute Help Agent. Handle queries related to transaction disputes, unauthorized charges, or billing errors.",
     description="Handles user queries about transaction disputes and billing errors.",
@@ -21,7 +22,7 @@ dispute_agent = LlmAgent(
 
 credit_card_agent = LlmAgent(
     name="CreditCardAgent",
-    model=LiteLlm(model="openai/gpt-5"),
+    model=LiteLlm(model="openai/gpt-4.1"),
     instruction=CREDIT_CARD_AGENT_INSTRUCTION,
     description=CREDIT_CARD_AGENT_DESCRIPTION,
     tools=[get_credit_card_details, get_credit_card_late_fee_waive_off]
@@ -29,7 +30,7 @@ credit_card_agent = LlmAgent(
 
 loan_agent = LlmAgent(
     name="LoanAgent",
-    model=LiteLlm(model="openai/gpt-5"),
+    model=LiteLlm(model="openai/gpt-4.1"),
     tools=[],
     instruction="You are a Loan Help Agent. Handle queries regarding loan applications, interest rates, repayment options, or loan status.",
     description="Handles user queries about loans and repayment options.",
@@ -37,7 +38,7 @@ loan_agent = LlmAgent(
 
 account_agent = LlmAgent(
     name="AccountAgent",
-    model=LiteLlm(model="openai/gpt-5"),
+    model=LiteLlm(model="openai/gpt-4.1"),
     tools=[],
     instruction="You are an Account Help Agent. Handle queries about account management, balance inquiries, password resets, or account security.",
     description="Handles user queries about account management and security.",
@@ -45,11 +46,8 @@ account_agent = LlmAgent(
 
 root_agent = LlmAgent(
     name="MainAIAssistant",
-    model=LiteLlm(model="openai/gpt-5"),
-    tools=[handover_to_chatbot, get_basic_account_information, get_user_transactions],
+    model=LiteLlm(model="openai/gpt-4.1"),
+    tools=[handover_to_chatbot, get_basic_account_information, get_user_transactions, agent_tool.AgentTool(agent=credit_card_agent)],
     instruction=ROOT_AGENT_INSTRUCTION,
     description=ROOT_AGENT_DESCRIPTION,
-    sub_agents=[
-        credit_card_agent,
-    ],
 )
