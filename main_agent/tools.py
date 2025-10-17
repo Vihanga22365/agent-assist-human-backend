@@ -1,5 +1,9 @@
 import sqlite3
+import requests
+import json
 from typing import List, Dict, Any
+
+from .socket_manager import emit_event
 
 
 def get_user_transactions(user_identifier: str) -> List[Dict[str, Any]]:
@@ -241,3 +245,110 @@ def get_credit_card_late_fee_waive_off(user_identifier: str, last_4_digits: str)
     finally:
         if conn:
             conn.close()
+
+
+def handover_to_chatbot(previous_chatbot_session: str, human_agent_query: str) -> Dict[str, Any]:
+    """
+    Query the chatbot service with a previous session context and new query.
+    
+    Args:
+        previous_chatbot_session (str): The session ID for maintaining conversation context
+        human_agent_query (str): The query/question to send to the chatbot given by the human agent
+        
+    Returns:
+        Dict[str, Any]: Dictionary containing the chatbot response or error information
+    """
+    def _notify_client(payload: Dict[str, Any]) -> None:
+        message = dict(payload)
+        message['sessionId'] = previous_chatbot_session
+        room_id = previous_chatbot_session or None
+        emit_event('chatbot_response', message, room=room_id)
+
+    try:
+        # Prepare the chatbot query in the required format
+        formatted_query = json.dumps({"user_type": "human_agent", "message": human_agent_query})
+        
+        # Prepare the request payload
+        payload = {
+            "appName": "main_agent",
+            "userId": "chathusha",
+            "sessionId": previous_chatbot_session,
+            "newMessage": {
+                "role": "user",
+                "parts": [{
+                    "text": formatted_query
+                }]
+            }
+        }
+        
+        # Set the headers
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        
+        print(f"Sending request to chatbot service...")
+        print(f"Session ID: {previous_chatbot_session}")
+        
+        print("===============================")
+        print("Formatted Query:")
+        print(formatted_query)
+        print("===============================")
+        
+        # Make the HTTP request
+        response = requests.post(
+            'http://localhost:8282/run',
+            headers=headers,
+            data=json.dumps(payload),
+            timeout=30  # 30 second timeout
+        )
+        
+        # Check if the request was successful
+        response.raise_for_status()
+        
+        # Parse the JSON response
+        result = response.json()
+        
+        print("===============================")
+        print("Chatbot Response:")
+        print(result)
+        print("===============================")
+        
+        print("Chatbot response received successfully")
+
+        response_payload = {
+            'success': True,
+            'response': result,
+            'status_code': response.status_code
+        }
+
+        _notify_client(response_payload)
+        return response_payload
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Request error: {e}")
+        error_payload = {
+            'success': False,
+            'error': str(e),
+            'error_type': 'request_error'
+        }
+        _notify_client(error_payload)
+        return error_payload
+    except json.JSONDecodeError as e:
+        print(f"JSON decode error: {e}")
+        error_payload = {
+            'success': False,
+            'error': str(e),
+            'error_type': 'json_error',
+            'raw_response': response.text if 'response' in locals() else None
+        }
+        _notify_client(error_payload)
+        return error_payload
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        error_payload = {
+            'success': False,
+            'error': str(e),
+            'error_type': 'unexpected_error'
+        }
+        _notify_client(error_payload)
+        return error_payload

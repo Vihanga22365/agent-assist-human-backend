@@ -1,2 +1,4 @@
 google-adk
 litellm
+requests
+python-socketio
