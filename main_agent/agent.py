@@ -4,7 +4,7 @@ from google.adk.agents import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
 from dotenv import load_dotenv
 from .prompts import ROOT_AGENT_INSTRUCTION, ROOT_AGENT_DESCRIPTION, CREDIT_CARD_AGENT_INSTRUCTION, CREDIT_CARD_AGENT_DESCRIPTION
-from .tools  import get_basic_account_information, get_user_transactions, get_credit_card_details, get_credit_card_late_fee_waive_off, handover_to_chatbot
+from .tools  import get_basic_account_information, get_user_transactions, get_credit_card_details, get_credit_card_late_fee_waive_off, handover_to_chatbot, get_credit_card_late_payment_details
 from google.adk.tools import agent_tool
 
 load_dotenv()
@@ -25,7 +25,7 @@ credit_card_agent = LlmAgent(
     model=LiteLlm(model="openai/gpt-4.1"),
     instruction=CREDIT_CARD_AGENT_INSTRUCTION,
     description=CREDIT_CARD_AGENT_DESCRIPTION,
-    tools=[get_credit_card_details, get_credit_card_late_fee_waive_off]
+    tools=[get_credit_card_details, get_credit_card_late_fee_waive_off, get_credit_card_late_payment_details]
 )
 
 loan_agent = LlmAgent(
