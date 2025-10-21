@@ -9,7 +9,7 @@ from google.adk.tools import agent_tool
 
 load_dotenv()
 
-os.environ['GOOGLE_API_KEY'] = os.getenv('GOOGLE_API_KEY')
+# os.environ['GOOGLE_API_KEY'] = os.getenv('GOOGLE_API_KEY')
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
 dispute_agent = LlmAgent(

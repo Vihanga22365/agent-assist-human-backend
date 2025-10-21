@@ -296,7 +296,7 @@ def handover_to_chatbot(previous_chatbot_session: str, human_agent_query: str) -
         
         # Make the HTTP request
         response = requests.post(
-            'http://localhost:8282/run',
+            'http://127.0.0.1:7282/run',
             headers=headers,
             data=json.dumps(payload),
             timeout=30  # 30 second timeout
